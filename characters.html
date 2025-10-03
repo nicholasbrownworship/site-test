@@ -8,39 +8,74 @@
   <link id="themeStylesheet" rel="stylesheet" href="highfantasy.css">
   <script src="theme-toggle.js" defer></script>
   <style>
-    /* New PC page styles */
-    .pc-card input[type="text"],
-    .pc-card textarea,
-    .pc-card input[type="file"] {
+    .pc-section {
+      margin-bottom: 24px;
+    }
+
+    .pc-section h2 {
+      margin-bottom: 12px;
+    }
+
+    #pcGridFantasy, #pcGridStarWars {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .pc-card {
+      background-color: rgba(212,175,55,0.15);
+      color: #1b2e59;
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 700;
+      font-family: inherit;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .pc-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+    }
+
+    .pc-card input, .pc-card textarea, .pc-card input[type=file], .pc-card button {
       display: block;
       width: 100%;
       margin-top: 6px;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
       padding: 6px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
+      border-radius: 6px;
+      border: 1px solid #1b2e59;
       font-family: inherit;
     }
 
-    .pc-card textarea {
-      resize: vertical;
-      min-height: 60px;
+    .pc-card button {
+      background-color: #b22222;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
     }
 
-    #addPC {
-      margin-bottom: 18px;
-      padding: 8px 12px;
-      font-weight: 700;
+    .pc-card button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    button#addPCFantasy, button#addPCStarWars {
+      margin-bottom: 12px;
+      padding: 6px 10px;
       border-radius: 6px;
       border: none;
-      background: #d4af37;
-      color: #1b2e59;
+      background-color: #1b2e59;
+      color: #d4af37;
       cursor: pointer;
+      font-weight: bold;
     }
 
-    #addPC:hover {
+    button#addPCFantasy:hover, button#addPCStarWars:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
   </style>
 </head>
@@ -63,46 +98,51 @@
   </header>
 
   <main>
-    <section class="card">
-      <h2>Player Characters</h2>
-      <button id="addPC">New PC</button>
-      <div class="pc-grid" id="pcGrid">
-        <!-- Dynamic PC cards appear here -->
-      </div>
+    <section class="card pc-section">
+      <h2>High Fantasy / D&D Characters</h2>
+      <button id="addPCFantasy">New PC</button>
+      <div id="pcGridFantasy"></div>
+    </section>
+
+    <section class="card pc-section">
+      <h2>Star Wars / Sci-Fi Characters</h2>
+      <button id="addPCStarWars">New PC</button>
+      <div id="pcGridStarWars"></div>
     </section>
   </main>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const pcGrid = document.getElementById("pcGrid");
-      const addPCBtn = document.getElementById("addPC");
 
-      // Load saved PCs from localStorage
-      const savedPCs = JSON.parse(localStorage.getItem("pcs") || "[]");
-      savedPCs.forEach(pc => addPCCard(pc));
+      const pcGridFantasy = document.getElementById("pcGridFantasy");
+      const addPCFantasy = document.getElementById("addPCFantasy");
+      const pcGridStarWars = document.getElementById("pcGridStarWars");
+      const addPCStarWars = document.getElementById("addPCStarWars");
 
-      addPCBtn.addEventListener("click", () => {
-        addPCCard();
-      });
+      const savedFantasy = JSON.parse(localStorage.getItem("pcsFantasy") || "[]");
+      savedFantasy.forEach(pc => addPCCard(pc, pcGridFantasy));
 
-      function addPCCard(data = {}) {
+      const savedStarWars = JSON.parse(localStorage.getItem("pcsStarWars") || "[]");
+      savedStarWars.forEach(pc => addPCCard(pc, pcGridStarWars));
+
+      addPCFantasy.addEventListener("click", () => addPCCard({}, pcGridFantasy));
+      addPCStarWars.addEventListener("click", () => addPCCard({}, pcGridStarWars));
+
+      function addPCCard(data = {}, grid) {
         const card = document.createElement("div");
         card.className = "pc-card";
 
-        // Name input
         const nameInput = document.createElement("input");
         nameInput.type = "text";
         nameInput.placeholder = "Character Name";
         nameInput.value = data.name || "";
         nameInput.addEventListener("input", savePCs);
 
-        // Backstory textarea
         const backstoryInput = document.createElement("textarea");
         backstoryInput.placeholder = "Optional backstory...";
         backstoryInput.value = data.backstory || "";
         backstoryInput.addEventListener("input", savePCs);
 
-        // Image upload
         const img = document.createElement("img");
         img.src = data.image || "character-placeholder.jpg";
         img.style.maxWidth = "100%";
@@ -124,26 +164,43 @@
           }
         });
 
-        // Append elements
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete PC";
+        deleteBtn.addEventListener("click", () => {
+          if(confirm("Are you sure you want to delete this PC?")) {
+            card.remove();
+            savePCs();
+          }
+        });
+
         card.appendChild(img);
         card.appendChild(nameInput);
         card.appendChild(backstoryInput);
         card.appendChild(fileInput);
+        card.appendChild(deleteBtn);
 
-        pcGrid.appendChild(card);
-
+        grid.appendChild(card);
         savePCs();
       }
 
       function savePCs() {
-        const pcs = [];
-        pcGrid.querySelectorAll(".pc-card").forEach(card => {
+        const pcsFantasy = [];
+        pcGridFantasy.querySelectorAll(".pc-card").forEach(card => {
           const name = card.querySelector("input[type=text]").value;
           const backstory = card.querySelector("textarea").value;
           const image = card.querySelector("img").src;
-          pcs.push({name, backstory, image});
+          pcsFantasy.push({name, backstory, image});
         });
-        localStorage.setItem("pcs", JSON.stringify(pcs));
+        localStorage.setItem("pcsFantasy", JSON.stringify(pcsFantasy));
+
+        const pcsStarWars = [];
+        pcGridStarWars.querySelectorAll(".pc-card").forEach(card => {
+          const name = card.querySelector("input[type=text]").value;
+          const backstory = card.querySelector("textarea").value;
+          const image = card.querySelector("img").src;
+          pcsStarWars.push({name, backstory, image});
+        });
+        localStorage.setItem("pcsStarWars", JSON.stringify(pcsStarWars));
       }
     });
   </script>
