@@ -1,0 +1,68 @@
+
+/* Star Wars theme (kept from previous) */
+:root{
+  --sw-yellow:#ffe81f;
+  --sw-cyan:#00ccff;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family: 'Orbitron', sans-serif;
+  color:var(--sw-yellow);
+  background: black url('https://www.transparenttextures.com/patterns/stardust.png') repeat;
+  min-height:100vh;
+}
+
+header{
+  background:black;
+  color:var(--sw-cyan);
+  padding:18px 28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:3px solid var(--sw-cyan);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+}
+
+header h1{
+  margin:0;
+  font-family:'Orbitron', sans-serif;
+  font-size:1.8rem;
+  letter-spacing:1px;
+}
+
+nav a{
+  color:var(--sw-yellow);
+  text-decoration:none;
+  margin-right:14px;
+  padding:6px 10px;
+  border-radius:6px;
+  font-weight:700;
+}
+
+nav a:hover{
+  text-shadow:0 0 8px var(--sw-cyan);
+}
+
+button#toggleTheme{
+  background:var(--sw-cyan);
+  color:black;
+  border:none;
+  padding:8px 12px;
+  border-radius:6px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+/* content card */
+main .hero, .card{
+  max-width:1100px;
+  margin:28px auto;
+  padding:20px;
+  border-radius:10px;
+  background: rgba(0,0,0,0.75);
+  border:1px solid rgba(0,204,255,0.08);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+}

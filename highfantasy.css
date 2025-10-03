@@ -1,0 +1,129 @@
+
+/* High Fantasy / Heroic theme */
+:root{
+  --hero-blue:#1b2e59;
+  --gold:#d4af37;
+  --ivory:#fdf6e3;
+  --card-shadow: rgba(27,46,89,0.12);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family: 'Cinzel', serif;
+  color:var(--hero-blue);
+  background: linear-gradient(180deg, #102040 0%, #fdf6e3 65%);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+
+header{
+  background:linear-gradient(90deg,var(--hero-blue), #163055);
+  color:var(--gold);
+  padding:18px 28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:6px solid rgba(212,175,55,0.85);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+}
+
+header h1{
+  margin:0;
+  font-family:'Cinzel Decorative', serif;
+  font-size:1.8rem;
+  letter-spacing:1px;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.4);
+}
+
+nav a{
+  color:var(--gold);
+  text-decoration:none;
+  margin-right:14px;
+  padding:6px 10px;
+  border-radius:6px;
+  transition:all .18s ease;
+  font-weight:700;
+}
+
+nav a:hover{
+  background: rgba(212,175,55,0.12);
+  transform:translateY(-2px);
+  box-shadow: 0 6px 14px rgba(27,46,89,0.15);
+}
+
+button#toggleTheme{
+  background:var(--gold);
+  color:var(--hero-blue);
+  border:none;
+  padding:8px 12px;
+  border-radius:6px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .18s ease;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+}
+
+button#toggleTheme:hover{
+  transform:translateY(-2px);
+  box-shadow: 0 10px 26px rgba(212,175,55,0.35);
+}
+
+/* Hero section */
+main .hero{
+  margin:28px auto;
+  max-width:1100px;
+  background: linear-gradient(180deg, rgba(253,246,227,0.98), rgba(255,255,255,0.9));
+  padding:28px;
+  border-radius:12px;
+  border:2px solid rgba(212,175,55,0.25);
+  box-shadow: 0 12px 40px var(--card-shadow);
+}
+
+.card{
+  max-width:1100px;
+  margin:18px auto;
+  background: linear-gradient(180deg, rgba(253,246,227,0.98), rgba(255,255,255,0.95));
+  padding:18px;
+  border-radius:8px;
+  border:1px solid rgba(27,46,89,0.06);
+  box-shadow: 0 8px 20px rgba(27,46,89,0.06);
+}
+
+.pc-grid{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+}
+
+.pc-card{
+  width:220px;
+  background:linear-gradient(180deg,#fff,#f6f2ea);
+  padding:10px;
+  border-radius:6px;
+  border:1px solid rgba(27,46,89,0.06);
+  text-align:center;
+}
+
+.pc-card img{
+  max-width:100%;
+  border-radius:6px;
+  border:3px solid rgba(212,175,55,0.14);
+}
+
+/* subtle watermark D20 in page corners */
+body::after{
+  content:'';
+  pointer-events:none;
+  position:fixed;
+  right:12px;
+  bottom:12px;
+  width:160px;
+  height:160px;
+  background-image: radial-gradient(circle at 40% 30%, rgba(212,175,55,0.08), transparent 20%),
+                    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="57" font-size="68" font-family="Cinzel, serif" text-anchor="middle" fill="%23d4af37" opacity="0.08">20</text></svg>');
+  background-size:cover;
+  opacity:0.9;
+  transform:rotate(-12deg);
+}
