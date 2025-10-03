@@ -85,15 +85,12 @@
       border-radius: 10px;
       box-shadow: 0 6px 18px rgba(0,0,0,0.3);
       font-family: inherit;
-      width: 180px;
+      width: 200px;
       z-index: 1000;
     }
 
     #diceWidget h3 { margin-top: 0; text-align: center; }
-
-    #diceWidget select,
-    #diceWidget input,
-    #diceWidget button {
+    #diceWidget select, #diceWidget input, #diceWidget button {
       width: 100%;
       margin-top: 6px;
       margin-bottom: 6px;
@@ -116,6 +113,15 @@
     }
 
     #diceResult { text-align: center; margin-top: 6px; font-weight: bold; }
+    #diceHistory {
+      list-style: none;
+      padding-left: 0;
+      max-height: 100px;
+      overflow-y: auto;
+      margin-top: 6px;
+      font-size: 0.9em;
+    }
+    #diceHistory li { padding: 2px 4px; border-bottom: 1px solid rgba(27,46,89,0.3); }
   </style>
 </head>
 <body>
@@ -166,6 +172,8 @@
     <input type="number" id="diceCount" value="1" min="1" max="10">
     <button id="rollDice">Roll</button>
     <div id="diceResult">Result: -</div>
+    <h4>Recent Rolls</h4>
+    <ul id="diceHistory"></ul>
   </div>
 
   <script>
@@ -254,34 +262,4 @@
         pcGridStarWars.querySelectorAll(".pc-card").forEach(card => {
           const name = card.querySelector("input[type=text]").value;
           const backstory = card.querySelector("textarea").value;
-          const image = card.querySelector("img").src;
-          pcsStarWars.push({name, backstory, image});
-        });
-        localStorage.setItem("pcsStarWars", JSON.stringify(pcsStarWars));
-      }
-    });
-
-    // Dice Roller
-    document.addEventListener("DOMContentLoaded", () => {
-      const rollBtn = document.getElementById("rollDice");
-      const diceType = document.getElementById("diceType");
-      const diceCount = document.getElementById("diceCount");
-      const diceResult = document.getElementById("diceResult");
-
-      rollBtn.addEventListener("click", () => {
-        const sides = parseInt(diceType.value);
-        const count = parseInt(diceCount.value);
-        if (!sides || !count) return;
-
-        let rolls = [];
-        for (let i = 0; i < count; i++) {
-          rolls.push(Math.floor(Math.random() * sides) + 1);
-        }
-
-        const total = rolls.reduce((a, b) => a + b, 0);
-        diceResult.textContent = `Result: ${rolls.join(", ")} (Total: ${total})`;
-      });
-    });
-  </script>
-</body>
-</html>
+          const image = card.querySelector
