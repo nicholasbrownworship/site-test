@@ -262,4 +262,45 @@
         pcGridStarWars.querySelectorAll(".pc-card").forEach(card => {
           const name = card.querySelector("input[type=text]").value;
           const backstory = card.querySelector("textarea").value;
-          const image = card.querySelector
+          const image = card.querySelector("img").src;
+          pcsStarWars.push({name, backstory, image});
+        });
+        localStorage.setItem("pcsStarWars", JSON.stringify(pcsStarWars));
+      }
+    });
+
+    // Dice Roller with History
+    document.addEventListener("DOMContentLoaded", () => {
+      const rollBtn = document.getElementById("rollDice");
+      const diceType = document.getElementById("diceType");
+      const diceCount = document.getElementById("diceCount");
+      const diceResult = document.getElementById("diceResult");
+      const diceHistory = document.getElementById("diceHistory");
+
+      const maxHistory = 5;
+
+      rollBtn.addEventListener("click", () => {
+        const sides = parseInt(diceType.value);
+        const count = parseInt(diceCount.value);
+        if (!sides || !count) return;
+
+        let rolls = [];
+        for (let i = 0; i < count; i++) {
+          rolls.push(Math.floor(Math.random() * sides) + 1);
+        }
+
+        const total = rolls.reduce((a, b) => a + b, 0);
+        diceResult.textContent = `Result: ${rolls.join(", ")} (Total: ${total})`;
+
+        const historyItem = document.createElement("li");
+        historyItem.textContent = `${count}d${sides}: ${rolls.join(", ")} (Total: ${total})`;
+        diceHistory.prepend(historyItem);
+
+        while(diceHistory.children.length > maxHistory) {
+          diceHistory.removeChild(diceHistory.lastChild);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
