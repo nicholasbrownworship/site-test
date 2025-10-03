@@ -37,6 +37,8 @@
       min-height: 60px;
       text-align: center;
       border-radius: 6px;
+      background: #fff;
+      position: relative;
     }
 
     .calendar-cell.has-event {
@@ -44,6 +46,16 @@
       color: #1b2e59;
       font-weight: 700;
       cursor: pointer;
+      transition: box-shadow 0.15s;
+    }
+    .calendar-cell.has-event:focus {
+      outline: 2px solid #1b2e59;
+      box-shadow: 0 0 0 3px #d4af3755;
+    }
+
+    .calendar-cell.empty {
+      background: #f6f6f6;
+      border: none;
     }
 
     #eventForm {
@@ -73,6 +85,46 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 18px rgba(0,0,0,0.2);
     }
+
+    /* Popup styling */
+    #eventPopup {
+      display: none;
+      position: fixed;
+      top: 18%;
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 300px;
+      max-width: 90vw;
+      background: #fff;
+      border: 2px solid #d4af37;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      padding: 24px 20px 16px 20px;
+      z-index: 1000;
+      border-radius: 10px;
+    }
+    #eventPopup h4 {
+      margin-top: 0;
+    }
+    #eventPopup ul {
+      padding-left: 1.2em;
+      margin: 0 0 1em 0;
+    }
+    #eventPopupClose {
+      background: #1b2e59;
+      color: #d4af37;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 18px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    #popupOverlay {
+      display: none;
+      position: fixed;
+      top:0; left:0; right:0; bottom:0;
+      background: rgba(0,0,0,0.3);
+      z-index: 999;
+    }
   </style>
 </head>
 <body>
@@ -83,13 +135,13 @@
         <a href="index.html">Home</a>
         <a href="campaign.html">Campaign</a>
         <a href="characters.html">Characters</a>
-        <a href="calendar.html">Calendar</a>
+        <a href="calendar.html" aria-current="page">Calendar</a>
         <a href="resources.html">Resources</a>
         <a href="forum.html">Forum</a>
       </nav>
     </div>
     <div>
-      <button id="toggleTheme" aria-pressed="false">Toggle Theme</button>
+      <button id="toggleTheme" aria-pressed="false" aria-label="Toggle color theme">Toggle Theme</button>
     </div>
   </header>
 
@@ -97,22 +149,28 @@
     <section class="card">
       <h2>Session Calendar</h2>
       <div id="calendarControls">
-        <button id="prevMonth">&lt; Previous</button>
+        <button id="prevMonth" aria-label="Previous month">&lt; Previous</button>
         <span id="monthYear"></span>
-        <button id="nextMonth">Next &gt;</button>
+        <button id="nextMonth" aria-label="Next month">Next &gt;</button>
       </div>
-      <div id="calendarGrid"></div>
+      <div id="calendarGrid" aria-label="Calendar grid" role="grid"></div>
       <div id="eventForm">
         <h3>Add New Session</h3>
-        <input type="date" id="eventDate">
-        <input type="time" id="eventTime">
-        <input type="text" id="eventTitle" placeholder="Session Title">
-        <textarea id="eventNotes" placeholder="Optional Notes"></textarea>
+        <input type="date" id="eventDate" aria-label="Event date">
+        <input type="time" id="eventTime" aria-label="Event time">
+        <input type="text" id="eventTitle" placeholder="Session Title" aria-label="Session title">
+        <textarea id="eventNotes" placeholder="Optional Notes" aria-label="Session notes"></textarea>
         <button id="addEvent">Add Session</button>
       </div>
     </section>
   </main>
-
+  <!-- Popup overlay and event details popup -->
+  <div id="popupOverlay"></div>
+  <div id="eventPopup" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
+    <h4 id="popupTitle"></h4>
+    <ul id="popupEventList"></ul>
+    <button id="eventPopupClose" aria-label="Close event details">Close</button>
+  </div>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const calendarGrid = document.getElementById("calendarGrid");
@@ -124,9 +182,17 @@
       const eventTimeInput = document.getElementById("eventTime");
       const eventTitleInput = document.getElementById("eventTitle");
       const eventNotesInput = document.getElementById("eventNotes");
+      const eventPopup = document.getElementById("eventPopup");
+      const popupOverlay = document.getElementById("popupOverlay");
+      const eventPopupClose = document.getElementById("eventPopupClose");
+      const popupTitle = document.getElementById("popupTitle");
+      const popupEventList = document.getElementById("popupEventList");
 
       let currentDate = new Date();
       let events = JSON.parse(localStorage.getItem("calendarEvents") || "[]");
+
+      // Weekday names, starting from Monday
+      const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
       function renderCalendar() {
         calendarGrid.innerHTML = "";
@@ -134,18 +200,36 @@
         const month = currentDate.getMonth();
         monthYear.textContent = currentDate.toLocaleString("default", { month: "long", year: "numeric" });
 
-        const firstDay = new Date(year, month, 1).getDay();
+        // Add weekday headers
+        for (let i = 0; i < 7; i++) {
+          const header = document.createElement("div");
+          header.className = "calendar-cell";
+          header.style.fontWeight = "bold";
+          header.style.background = "#f8f8f8";
+          header.textContent = weekdays[i];
+          header.setAttribute("role", "columnheader");
+          calendarGrid.appendChild(header);
+        }
+
+        // Find the weekday (0=Monday, 6=Sunday) of the first day of the month
+        let firstDay = new Date(year, month, 1).getDay(); // 0=Sunday, 1=Monday,...
+        firstDay = (firstDay + 6) % 7; // convert so Monday=0
+
         const lastDate = new Date(year, month + 1, 0).getDate();
 
+        // Add empty cells for days before the 1st of the month
         for (let i = 0; i < firstDay; i++) {
           const emptyCell = document.createElement("div");
           emptyCell.className = "calendar-cell empty";
+          emptyCell.setAttribute("aria-hidden", "true");
           calendarGrid.appendChild(emptyCell);
         }
 
         for (let day = 1; day <= lastDate; day++) {
           const cell = document.createElement("div");
           cell.className = "calendar-cell";
+          cell.setAttribute("tabindex", "-1");
+          cell.setAttribute("role", "gridcell");
           cell.textContent = day;
 
           const dayEvents = events.filter(e => {
@@ -155,11 +239,38 @@
 
           if(dayEvents.length > 0){
             cell.classList.add("has-event");
-            cell.title = dayEvents.map(ev => `${ev.time || ''} - ${ev.title}`).join("\n");
+            cell.title = dayEvents.map(ev => `${ev.time ? ev.time + " - " : ""}${ev.title}`).join("\n");
+            cell.setAttribute("tabindex", "0");
+            cell.setAttribute("aria-label", `Events on ${currentDate.toLocaleString("default",{month:"long"})} ${day}`);
+            cell.addEventListener("click", () => showEventPopup(dayEvents, year, month, day));
+            cell.addEventListener("keydown", (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                showEventPopup(dayEvents, year, month, day);
+              }
+            });
           }
 
           calendarGrid.appendChild(cell);
         }
+      }
+
+      function showEventPopup(dayEvents, year, month, day) {
+        popupTitle.textContent = `Events for ${day} ${currentDate.toLocaleString("default", {month: "long"})} ${year}`;
+        popupEventList.innerHTML = "";
+        dayEvents.forEach(ev => {
+          const li = document.createElement("li");
+          li.innerHTML = `<strong>${ev.time ? ev.time + " - " : ""}${ev.title}</strong>${ev.notes ? "<br/>" + ev.notes : ""}`;
+          popupEventList.appendChild(li);
+        });
+        eventPopup.style.display = "block";
+        popupOverlay.style.display = "block";
+        eventPopup.focus();
+      }
+
+      function hideEventPopup() {
+        eventPopup.style.display = "none";
+        popupOverlay.style.display = "none";
       }
 
       function saveEvents() {
@@ -173,7 +284,13 @@
         const title = eventTitleInput.value.trim();
         const notes = eventNotesInput.value.trim();
 
-        if (!date || !title) return alert("Please add a date and title.");
+        if (!date || !title) {
+          eventDateInput.style.borderColor = date ? "#ccc" : "red";
+          eventTitleInput.style.borderColor = title ? "#ccc" : "red";
+          return alert("Please add a date and title.");
+        }
+        eventDateInput.style.borderColor = "#ccc";
+        eventTitleInput.style.borderColor = "#ccc";
 
         events.push({ date, time, title, notes });
         eventDateInput.value = "";
@@ -191,6 +308,12 @@
       nextMonth.addEventListener("click", () => {
         currentDate.setMonth(currentDate.getMonth() + 1);
         renderCalendar();
+      });
+
+      popupOverlay.addEventListener("click", hideEventPopup);
+      eventPopupClose.addEventListener("click", hideEventPopup);
+      eventPopup.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") hideEventPopup();
       });
 
       renderCalendar();
