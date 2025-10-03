@@ -1,19 +1,84 @@
 <!doctype html>
 <html lang="en">
 <head>
-
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cinzel+Decorative&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-
   <title>Calendar - TTRPG Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cinzel+Decorative&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <link id="themeStylesheet" rel="stylesheet" href="highfantasy.css">
   <script src="theme-toggle.js" defer></script>
+  <style>
+    #calendarControls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    #calendarControls button {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      background: #1b2e59;
+      color: #d4af37;
+      cursor: pointer;
+    }
+
+    #calendarGrid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-top: 12px;
+    }
+
+    .calendar-cell {
+      border: 1px solid #ccc;
+      padding: 8px;
+      min-height: 60px;
+      text-align: center;
+      border-radius: 6px;
+    }
+
+    .calendar-cell.has-event {
+      background-color: #d4af37;
+      color: #1b2e59;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #eventForm {
+      margin-top: 20px;
+    }
+
+    #eventForm input, #eventForm textarea, #eventForm button {
+      display: block;
+      width: 100%;
+      margin-top: 6px;
+      margin-bottom: 10px;
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-family: inherit;
+    }
+
+    #eventForm button {
+      background: #d4af37;
+      color: #1b2e59;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    #eventForm button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    }
+  </style>
 </head>
 <body>
   <header>
     <div>
-      <h1>Session Calendar</h1>
+      <h1>Calendar</h1>
       <nav aria-label="Main">
         <a href="index.html">Home</a>
         <a href="campaign.html">Campaign</a>
@@ -24,19 +89,112 @@
       </nav>
     </div>
     <div>
-      <button id="toggleTheme">Toggle Theme</button>
+      <button id="toggleTheme" aria-pressed="false">Toggle Theme</button>
     </div>
   </header>
 
   <main>
     <section class="card">
-      <h2>Upcoming Sessions</h2>
-      <ul>
-        <li><strong>Next session:</strong> [Date] — Short note</li>
-        <li>[Optional RSVPs / notes]</li>
-      </ul>
-      <p>Want a functional calendar (with drag/drop events & RSVPs)? I can wire up FullCalendar or a simple backend next.</p>
+      <h2>Session Calendar</h2>
+      <div id="calendarControls">
+        <button id="prevMonth">&lt; Previous</button>
+        <span id="monthYear"></span>
+        <button id="nextMonth">Next &gt;</button>
+      </div>
+      <div id="calendarGrid"></div>
+      <div id="eventForm">
+        <h3>Add New Session</h3>
+        <input type="date" id="eventDate">
+        <input type="time" id="eventTime">
+        <input type="text" id="eventTitle" placeholder="Session Title">
+        <textarea id="eventNotes" placeholder="Optional Notes"></textarea>
+        <button id="addEvent">Add Session</button>
+      </div>
     </section>
   </main>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const calendarGrid = document.getElementById("calendarGrid");
+      const monthYear = document.getElementById("monthYear");
+      const prevMonth = document.getElementById("prevMonth");
+      const nextMonth = document.getElementById("nextMonth");
+      const addEventBtn = document.getElementById("addEvent");
+      const eventDateInput = document.getElementById("eventDate");
+      const eventTimeInput = document.getElementById("eventTime");
+      const eventTitleInput = document.getElementById("eventTitle");
+      const eventNotesInput = document.getElementById("eventNotes");
+
+      let currentDate = new Date();
+      let events = JSON.parse(localStorage.getItem("calendarEvents") || "[]");
+
+      function renderCalendar() {
+        calendarGrid.innerHTML = "";
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        monthYear.textContent = currentDate.toLocaleString("default", { month: "long", year: "numeric" });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) {
+          const emptyCell = document.createElement("div");
+          emptyCell.className = "calendar-cell empty";
+          calendarGrid.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= lastDate; day++) {
+          const cell = document.createElement("div");
+          cell.className = "calendar-cell";
+          cell.textContent = day;
+
+          const dayEvents = events.filter(e => {
+            const eventDate = new Date(e.date);
+            return eventDate.getFullYear() === year && eventDate.getMonth() === month && eventDate.getDate() === day;
+          });
+
+          if(dayEvents.length > 0){
+            cell.classList.add("has-event");
+            cell.title = dayEvents.map(ev => `${ev.time || ''} - ${ev.title}`).join("\n");
+          }
+
+          calendarGrid.appendChild(cell);
+        }
+      }
+
+      function saveEvents() {
+        localStorage.setItem("calendarEvents", JSON.stringify(events));
+        renderCalendar();
+      }
+
+      addEventBtn.addEventListener("click", () => {
+        const date = eventDateInput.value;
+        const time = eventTimeInput.value;
+        const title = eventTitleInput.value.trim();
+        const notes = eventNotesInput.value.trim();
+
+        if (!date || !title) return alert("Please add a date and title.");
+
+        events.push({ date, time, title, notes });
+        eventDateInput.value = "";
+        eventTimeInput.value = "";
+        eventTitleInput.value = "";
+        eventNotesInput.value = "";
+        saveEvents();
+      });
+
+      prevMonth.addEventListener("click", () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+      });
+
+      nextMonth.addEventListener("click", () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+      });
+
+      renderCalendar();
+    });
+  </script>
 </body>
 </html>
